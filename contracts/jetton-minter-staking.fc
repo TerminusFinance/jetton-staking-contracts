@@ -114,7 +114,7 @@ int multiply_f(int a, int b) { ;; multiply with factor
   send_raw_message(msg.end_cell(), PAY_FEES_SEPARATELY); ;; pay transfer fees separately, revert on errors
 }
 
-() recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+() recv_internal(int my_balance,int msg_value, cell in_msg_full, slice in_msg_body) impure {
   slice cs = in_msg_full.begin_parse();
   int flags = cs~load_uint(4);
   if (flags & 1) { ;; ignore all bounced messages
@@ -305,11 +305,14 @@ int multiply_f(int a, int b) { ;; multiply with factor
   ;; withdraw#46ed2e94 query_id:uint64 = InternalMsgBody;
   if (op == op::withdraw) {
     throw_unless(error::unauthorized_withdraw_request, equal_slice_bits(sender_address, admin_address));
+    throw_if(error::not_enough_tons_for_withdrawal, my_balance() <= min_tons_for_storage); ;; balance may be lower than 0.1 ton
     raw_reserve(min_tons_for_storage , 0);
     int withdraw_amount = in_msg_body~load_coins();
     if (withdraw_amount == 0) {
       withdraw_amount = jetton_balance;
     }
+    throw_if(error::insufficient_jetton_balance, withdraw_amount > jetton_balance); ;; when withdraw_amount is more than jetton_balance we have smth like "bad debt". 
+    ;; for example, if jetton_balance is 1000, withdraw_amount is 2000, then we have "bad debt" and we will save -500 jettons. Its wrong 
     cell message_body = create_simple_transfer_body(query_id, 0, withdraw_amount, withdraw_address).end_cell();
     var msg = begin_cell()
       .store_msg_flag(msg_flag::bounceable)
@@ -317,7 +320,7 @@ int multiply_f(int a, int b) { ;; multiply with factor
       .store_coins(0)
       .store_msgbody_prefix_ref(message_body);
     send_raw_message(msg.end_cell(), CARRY_REMAINING_BALANCE);
-    save_data(total_supply, 0, state, price, min_withdraw, admin_address, withdraw_address,
+    save_data(total_supply, jetton_balance - withdraw_amount, state, price, min_withdraw, admin_address, withdraw_address,
       jetton_minter_address, jetton_wallet_address, content, jetton_wallet_code);
     return ();
   }

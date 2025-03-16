@@ -28,3 +28,5 @@ const int error::unauthorized_change_jetton_wallet_request = 88;
 const int error::invalid_jetton_wallet = 89;
 const int error::wrong_opcode = 90;
 const int error::unauthorized_change_code_request = 91;
+const int error::not_enough_tons_for_withdrawal = 92;
+const int error::insufficient_jetton_balance = 93;
