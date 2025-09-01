@@ -42,9 +42,9 @@ describe('JettonWallet', () => {
         wallet_code = await compile('JettonWallet');
         state = process.env.JETTON_STATE ? Number(process.env.JETTON_STATE).valueOf() : 0;
         price = process.env.JETTON_PRICE ? BigInt(process.env.JETTON_PRICE).valueOf() : BigInt(1000000000);
-        cap = process.env.JETTON_CAP ? BigInt(process.env.JETTON_CAP).valueOf() : BigInt(1000000000);
-        Staking_start_date = process.env.JETTON_Staking_START_DATE ? Number(process.env.JETTON_Staking_START_DATE).valueOf() : 0;
-        Staking_end_date = process.env.JETTON_Staking_END_DATE ? Number(process.env.JETTON_Staking_END_DATE).valueOf() : 0;
+        let cap = process.env.JETTON_CAP ? BigInt(process.env.JETTON_CAP).valueOf() : BigInt(1000000000);
+        let Staking_start_date = process.env.JETTON_Staking_START_DATE ? Number(process.env.JETTON_Staking_START_DATE).valueOf() : 0;
+        let Staking_end_date = process.env.JETTON_Staking_END_DATE ? Number(process.env.JETTON_Staking_END_DATE).valueOf() : 0;
 
         jettonMinter = blockchain.openContract(
             JettonMinterStaking.createFromConfig(
@@ -54,9 +54,7 @@ describe('JettonWallet', () => {
                     content,
                     wallet_code,
                     price: price as bigint,
-                    cap: cap as bigint,
-                    Staking_start_date,
-                    Staking_end_date,
+                    inJettonMinterAddress: deployer.address, // Add missing required property
                 },
                 minter_code));
         userWallet = async (address: Address) => blockchain.openContract(
@@ -68,7 +66,7 @@ describe('JettonWallet', () => {
 
     // implementation detail
     it('should deploy', async () => {
-        const deployResult = await jettonMinter.sendDeploy(deployer.getSender(), toNano('1'));
+        const deployResult = await jettonMinter.sendDeploy(deployer.getSender(), toNano('1'), deployer.address);
 
         expect(deployResult.transactions).toHaveTransaction({
             from: deployer.address,

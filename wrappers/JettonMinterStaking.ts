@@ -371,4 +371,11 @@ export class JettonMinterStaking implements Contract {
     let res = await provider.get('get_in_jetton_balance', []);
     return res.stack.readBigNumber();
   }
+
+  async getJettonAmountForTon(provider: ContractProvider, tonAmount: bigint) {
+    let res = await provider.get('get_jetton_amount', [
+      { type: 'int', value: tonAmount }
+    ]);
+    return res.stack.readBigNumber();
+  }
 }
